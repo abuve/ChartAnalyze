@@ -1,0 +1,215 @@
+{% extends 'layout/_layout.html' %}
+
+{% load count_instance %}
+
+{% block css %}
+
+    <link href="/static/plugins/bootstrap/css/bootstrap-table.css" rel="stylesheet" />
+
+{% endblock %}
+
+{% block conent %}
+
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <div class='btn-group btn-group-xs'>
+            <a type="button" class="btn btn-default btn-arrow-right btn-arrow-left:before" style="color:#1c5a9c; padding-left:10px" href="{% url 'dashboard' %}"><span class="glyphicon glyphicon-home" aria-hidden="true"></span> 控制面板</a>
+            <a type="button" class="btn btn-default btn-arrow-right" style="color:#1c5a9c;" href="{% url 'application-server' %}"><span class="glyphicon glyphicon-th-list" aria-hidden="true"></span> 应用列表</a>
+            <a type="button" class="btn btn-default btn-arrow-right" style="color:#1c5a9c;" href="{% url 'server-config' response.data.id %}"><span class="glyphicon glyphicon-cog" aria-hidden="true"></span> {{ response.data.name }}</a>
+            <a type="button" class="btn btn-default btn-arrow-right" style="color:#1c5a9c;" href="{% url 'server-config-group' response.data.id %}"><span class="glyphicon glyphicon-book" aria-hidden="true"></span> 分组管理</a>
+        </div>
+    </ol>
+
+    <div style="padding: 10px 8px;">
+
+            <!-- nav start -->
+            {% include 'include/server_config_header.html' %}
+            <!-- nav end -->
+
+        <div class="row" style="padding-top: 10px">
+            <div class="col-md-12">
+
+                <div id="group_toolbar" class="btn-group">
+                    <a class="btn btn-default no-radius" data-toggle="modal" data-target="#add_group_modal" onclick="create_group_fn()"><i class="fa fa-plus-circle"></i> 创建分组</a>
+                    <a class="btn btn-default no-radius" data-toggle="modal" data-target="#add_public_group_modal" onclick="bond_public_group_fn()"><i class="fa fa-plus-circle"></i> 绑定公共分组</a>
+                </div>
+
+                <table id="group_table"></table>
+            </div>
+
+        </div>
+
+    </div>
+
+
+<!-- 新增分组 -->
+<div class="modal fade" id="add_group_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 150px">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">创建分组</h4>
+            </div>
+            <div class="modal-body">
+
+                <form role="form" id="add_server_group_form" action="/update-server-group.html" method="post">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            <tr>
+                                <td style="line-height:34px;" align="right">分组名称 : *</td>
+                                <td>
+                                    <input type="text" class="form-control" name="add_group_name" placeholder="请输入分组名称...">
+                                    <input type="hidden" class="form-control" name="add_group_app_id" value="{{ response.data.id }}">
+                                </td>
+                            </tr>
+                            <!--<tr>
+                                <td style="line-height:34px;" align="right">Docker yaml conf : *</td>
+                                <td>
+                                    <input type="text" class="form-control" name="add_group_yaml_path" placeholder="Please enter application path...">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="line-height:34px;" align="right">Jenkins Key : *</td>
+                                <td>
+                                    <input type="text" class="form-control" name="add_group_jenkins_key" placeholder="">
+                                </td>
+                            </tr>-->
+                            <tr>
+                                <td style="line-height:34px;" align="right">分组类型 : *</td>
+                                <td style="vertical-align: inherit">
+
+                                    <label class="radio-inline" style="padding-left: 24px">
+                                        <input type="radio" name="add_group_type" value="0" id="add_group_type_0" checked=""> 私有分组
+                                    </label>
+
+                                    <label class="radio-inline">
+                                        <input type="radio" name="add_group_type" value="1" id="add_group_type_1"> 公共分组
+                                    </label>
+
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="update_server_group_fn" onclick="update_server_group_fn('post')">保存</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<!-- 新增公共分组 -->
+<div class="modal fade" id="add_public_group_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 150px">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">绑定公共分组</h4>
+            </div>
+            <div class="modal-body">
+
+                <form role="form" id="add_server_group_form" action="/update-server-group.html" method="post">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            <tr>
+                                <td style="line-height:34px;" align="right">分组名称 : *</td>
+                                <td>
+                                    <select class="form-control" name="bond_public_group" id="bond_public_group"></select>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="do_bond_public_group()">绑定</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<!-- 分组更新modal -->
+<div class="modal fade" id="delete_group_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 150px">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">删除分组</h4>
+            </div>
+            <div class="modal-body" id="group_html_area"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="delete_server_group_fn" onclick="update_server_group_fn('post')">删除</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+<!-- yaml配置管理 -->
+<div class="modal fade" id="yaml_update_modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="min-width: 800px">
+        <div class="modal-content" style="margin-top: 100px;">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Docker Compose Conf</h4>
+            </div>
+            <div class="modal-body">
+
+                <form role="form" id="update_yaml_form" action="/update-server-group.html" method="post">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <!--<textarea type="textarea" class="form-control" name="add_group_yaml_path" placeholder="Please enter application path..." row="10"></textarea>-->
+                                    <pre style="width:750px; max-height:550px; overflow-y:scroll; overflow-x:scroll;" id="yaml_conf_html"></pre>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="edit_yaml_conf_btn" onclick="edit_yaml_conf_fn()">更新</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" src="/static/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/static/plugins/bootstrap/js/bootstrap.js"></script>
+    <script type="text/javascript" src="/static/js/cores.js"></script>
+
+    <script src="/static/plugins/bootstrap/js/bootstrap-table.js"></script>
+
+    <script type="text/javascript" src="/static/js/server-config-group.js"></script>
+
+    <script>
+        $(function () {
+            $.initMenu('#menu_server', '#parent_project');
+
+            var groupTable = new GroupTableInit();
+            groupTable.Init({{ response.data.id }});
+
+            // 激活头部菜单
+            $("#groups").addClass('active')
+
+        });
+
+    </script>
+
+{% endblock %}

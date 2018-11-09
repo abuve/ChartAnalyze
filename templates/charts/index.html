@@ -1,0 +1,113 @@
+{% extends 'layout/_layout.html' %}
+
+{% block css %}
+
+
+{% endblock %}
+
+{% block conent %}
+    <ol class="breadcrumb" style="margin-bottom: 0;">
+        <li><a href="/cmdb.html">首页</a></li>
+        <li class="active">用户管理</li>
+    </ol>
+    <div style="padding: 5px 8px; ">
+
+        <div class="col-md-6" style="height: 800px">
+            <div id="chart_pie_member_sex" style="height: 280px"></div>
+        </div>
+
+    </div>
+
+    <!-- 删除层开始 -->
+    <div id="modal_delete" class="alert alert-danger alert-dismissible fade in modal-delete hide" role="alert">
+        <button type="button" class="close" aria-label="Close" onclick="$.Hide('#shade,#modal_delete');"><span>×</span>
+        </button>
+        <h4>确定用户信息？</h4>
+
+        <p style="text-align: right">
+            <button type="button" class="btn btn-danger" id="do_delete_confirm">确定删除</button>
+            <button type="button" class="btn btn-default" onclick="$.Hide('#shade,#modal_delete');">取消</button>
+        </p>
+    </div>
+    <!-- 删除层结束 -->
+
+    <!-- 遮罩层开始 -->
+    <div id='shade' class='shade hide'></div>
+    <!-- 遮罩层结束 -->
+
+    <!-- 加载层开始 -->
+    <div id='loading' class='loading hide'></div>
+    <!-- 加载层结束 -->
+
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" src="/static/js/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/static/plugins/bootstrap/js/bootstrap.js"></script>
+    <script type="text/javascript" src="/static/js/cores.js"></script>
+    <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+
+    <script>
+        $(function () {
+            $.initMenu('#menu_user_profile');
+            $.nbDataList('/idcjson.html');
+        });
+
+        function show_chart_count(data_preset, data_obj) {
+            var dom = document.getElementById(data_preset.dom_id);
+            var chart = echarts.init(dom);
+            option = null;
+            option = {
+                title : {
+                    text: data_preset.title,
+                    subtext: data_preset.subtext,
+                    x:'center'
+                },
+                tooltip : {
+                    trigger: 'item',
+                    formatter: "{a} <br/>{b} : {c} ({d}%)"
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    data: data_obj.chart_name_list
+                },
+                series : [
+                    {
+                        name: '数据统计',
+                        type: 'pie',
+                        radius : '55%',
+                        center: ['50%', '60%'],
+                        data: data_obj.chart_data_list,
+                        itemStyle: {
+                            emphasis: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            };
+
+            if (option && typeof option === "object") {
+                chart.setOption(option, true);
+            }
+        }
+
+        var chart_obj = {'title': 'CMDB资源类型统计', 'subtext': '分类数据', 'dom_id': 'chart_pie_member_sex'}
+
+        $.ajax({
+        url: '/charts/chart-json.html',
+        type: 'get',
+        dataType: 'json',
+        traditional:true,
+        success: function (data, response, status) {
+            if (data) {
+                show_chart_count(chart_obj, data);
+            }
+        }
+    });
+
+    </script>
+{% endblock %}
